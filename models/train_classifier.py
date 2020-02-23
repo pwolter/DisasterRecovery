@@ -20,6 +20,8 @@ from sklearn.model_selection import GridSearchCV
 
 import pickle
 
+nltk.download(['punkt', 'stopwords', 'wordnet'])
+
 def load_data(database_filepath):
 
     # ../data/DisasterResponse.db
@@ -34,18 +36,18 @@ def load_data(database_filepath):
     df = pd.read_sql_table(table_name, conn)
 
     # Sample 25% of dataframe to speed up modeling - change to 100% for full run
-    df = df.sample(frac=.1)
+    sample_percentage = 0.1
+    df = df.sample(frac=sample_percentage)
 
     # let's build X and y
     X = df['message']
     y = df.drop(columns=['id', 'message', 'original', 'genre'])
+    category_names = y.columns.tolist()
 
-    return X, y, y.keys()
+    return X, y, category_names
 
 
 def tokenize(text):
-
-    nltk.download(['punkt', 'stopwords', 'wordnet']);
 
     # URL replacement
     url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
@@ -104,7 +106,6 @@ def build_model():
 def evaluate_model(model, X_test, Y_test, category_names):
 
     y_pred = model.predict(X_test)
-
     y_pred_df = pd.DataFrame(data=y_pred, columns=category_names)
 
     for name in Y_test:
