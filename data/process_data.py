@@ -30,7 +30,7 @@ def clean_data(df):
     # rename the columns of `categories`
     categories.columns = category_colnames
 
-    # convert category values to integers (0 and 1)
+    # convert category values to integers
     for column in categories:
         # set each value to be the last character of the string an dconvert it to int
         categories[column] = categories[column].astype(str).apply(lambda x : int(x[-1:]))
@@ -40,6 +40,9 @@ def clean_data(df):
 
     # concatenate the original dataframe with the new `categories` dataframe
     df = pd.concat([df, categories], axis=1)
+
+    # replace related values = 2 to 0 according to documentation
+    df['related'] = df['related'].replace(2, 0)
 
     # delete duplicates
     return df[~df.duplicated()]
