@@ -20,6 +20,8 @@ from sklearn.model_selection import GridSearchCV
 
 import pickle
 
+from sklearn.utils import parallel_backend
+
 nltk.download(['punkt', 'stopwords', 'wordnet'])
 
 def load_data(database_filepath):
@@ -36,12 +38,12 @@ def load_data(database_filepath):
     df = pd.read_sql_table(table_name, conn)
 
     # Sample 25% of dataframe to speed up modeling - change to 100% for full run
-    sample_percentage = 0.1
+    sample_percentage = 0.025
     df = df.sample(frac=sample_percentage)
 
     # let's build X and y
     X = df['message']
-    y = df.drop(columns=['id', 'message', 'original', 'genre'])
+    y = df.drop(columns=['id', 'message', 'original', 'genre', 'request', 'offer'])
     category_names = y.columns.tolist()
 
     return X, y, category_names
@@ -77,7 +79,7 @@ def build_model():
     max_df = 0.75
     max_features = 5000
     min_df = 1
-    ngram_range = (1, 2)
+    ngram_range = (2, 3)
 
     # TfidfTransformer
     norm = 'l1'
@@ -86,9 +88,22 @@ def build_model():
     use_idf = True
 
     # RandomForestClassifier
-    criterion = 'entropy'
-    min_samples_leaf = 2
-    n_estimators = 100
+    # criterion = 'entropy'
+    # min_samples_leaf = 2
+    # n_estimators = 100
+
+    parameters = {
+        # 'vect__max_df': (0.75, 0.8),
+        # 'vect__max_features': (5000, 10000, 50000),
+        # 'vect__ngram_range': ((1, 2), (2, 2)),
+
+        # 'tfidf__use_idf': (True, False),
+        # 'tfidf__norm': ('l1', 'l2'),
+
+        'clf__estimator__n_estimators': (100, 150, 200),
+        # 'clf__estimator__criterion': ('gini', 'entropy'),
+        'clf__estimator__min_samples_leaf': (2, 4, 6),
+    }
 
     pipeline = Pipeline(
         [
@@ -96,11 +111,15 @@ def build_model():
 
             ('tfidf', TfidfTransformer(norm=norm, smooth_idf=smooth_idf, sublinear_tf=sublinear_tf, use_idf=use_idf)),
 
-            ('clf', MultiOutputClassifier(RandomForestClassifier(criterion=criterion, min_samples_leaf=min_samples_leaf, n_estimators=n_estimators)))
+            # ('clf', MultiOutputClassifier(RandomForestClassifier(criterion=criterion, min_samples_leaf=min_samples_leaf, n_estimators=n_estimators)))
+
+            ('clf', MultiOutputClassifier(RandomForestClassifier()))
         ]
     )
 
-    return pipeline
+    grid_search = GridSearchCV(estimator=pipeline, param_grid=parameters, n_jobs=-1, cv=5, refit=True, return_train_score=True, verbose=1)
+
+    return grid_search
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
@@ -127,16 +146,15 @@ def main():
         X, Y, category_names = load_data(database_filepath)
         X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
 
-        category_names = Y_test.keys()
+        with parallel_backend('multiprocessing'):
+            print('Building model...')
+            model = build_model()
 
-        print('Building model...')
-        model = build_model()
+            print('Training model...')
+            model.fit(X_train, Y_train)
 
-        print('Training model...')
-        model.fit(X_train, Y_train)
-
-        print('Evaluating model...')
-        evaluate_model(model, X_test, Y_test, category_names)
+            print('Evaluating model...')
+            evaluate_model(model, X_test, Y_test, category_names)
 
         print('Saving model...\n    MODEL: {}'.format(model_filepath))
         save_model(model, model_filepath)
