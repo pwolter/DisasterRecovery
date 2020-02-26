@@ -1,8 +1,34 @@
+"""process_data.py performs the ETL pipeline for this project. It does:
+
+- Loads the `messages.csv` and `categories.csv` files and transforms
+  them into pandas dataframes
+- Merges the two dataframes
+- Cleans the data
+- Stores it in a SQLite database
+"""
+
+__version__ = '0.1'
+__author__ = 'Pablo Wolter'
+
+
 import sys
 import pandas as pd
 from sqlalchemy import create_engine
 
 def load_data(messages_filepath, categories_filepath):
+    """Reads 'disaster_messages.csv' and 'disaster_categories.csv' into
+    pnadas dataframes. Merges them into a single dataframe and returns it.
+
+    Args:
+    messages_filepath:
+        Full path for the disaster_messages csv file.
+    categories_filepath:
+        Full path for the disaster_categories csv file.
+    Returns:
+    df:
+        Merged Dataframe.
+    """
+
 
     # load messages dataset
     messages = pd.read_csv('disaster_messages.csv')
@@ -17,6 +43,16 @@ def load_data(messages_filepath, categories_filepath):
 
 
 def clean_data(df):
+    """Reads the dataframe, splits the categories individualy, renames
+    columns, converts the categorical data to integers and returns it.
+
+    Args:
+    df:
+        Dataframe to clean.
+    Returns:
+    df:
+        Cleaned Dataframe.
+    """
 
     # create a dataframe of the 36 individual category columns
     categories = df['categories'].str.split(";", expand=True)
@@ -32,13 +68,16 @@ def clean_data(df):
 
     # convert category values to integers
     for column in categories:
-        # set each value to be the last character of the string an dconvert it to int
-        categories[column] = categories[column].astype(str).apply(lambda x : int(x[-1:]))
+        # set each value to be the last character of the string an
+        # dconvert it to int
+        categories[column] = categories[column].astype(str) \
+                             .apply(lambda x : int(x[-1:]))
 
     # drop the original categories column from `df`
     df.drop(columns='categories', inplace=True)
 
-    # concatenate the original dataframe with the new `categories` dataframe
+    # concatenate the original dataframe with the new
+    # `categories` dataframe
     df = pd.concat([df, categories], axis=1)
 
     # replace related values = 2 to 0 according to documentation
@@ -49,6 +88,15 @@ def clean_data(df):
 
 
 def save_data(df, database_filename):
+    """Reads the dataframe, and saves it in a SQLite database.
+
+    Args:
+    df:
+        Dataframe to clean.
+    Returns:
+    None:
+        Saves Dataframe to a SQLite database.
+    """
 
     # database and table name
     database_name = 'sqlite:///{}'.format(database_filename)

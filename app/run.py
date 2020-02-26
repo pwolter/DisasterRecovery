@@ -1,3 +1,10 @@
+"""run.py Runs the Flask application
+"""
+
+__version__ = '0.1'
+__author__ = 'Pablo Wolter'
+
+
 import os
 import json
 import plotly
@@ -30,6 +37,7 @@ def tokenize(text):
 database_filepath = '../data/DisasterResponse.db'
 
 db_engine_path = 'sqlite:///{}'.format(database_filepath)
+
 # get database table name
 table_name = os.path.split(database_filepath)[1].replace('.db', '')
 
