@@ -12,6 +12,7 @@ __author__ = 'Pablo Wolter'
 
 
 import sys
+import argparse
 import pandas as pd
 from sqlalchemy import create_engine
 
@@ -105,31 +106,46 @@ def save_data(df, database_filename):
     engine = create_engine(database_name)
     df.to_sql(table_name, engine, index=False, if_exists='replace')
 
+def arguments_parser():
+
+    parser = argparse.ArgumentParser(
+            description='''Performs ETL pipeline.
+            Please provide the filepaths of the messages and categories
+           datasets as the first and second argument respectively, as
+           well as the filepath of the database to save the cleaned data
+           to as the third argument.''',
+           epilog='''Example: python process_data.py
+           disaster_messages.csv disaster_categories.csv DisasterResponse.db
+           '''
+    )
+
+    parser.add_argument('messages', help='Disaster messages CSV file')
+    parser.add_argument('categories', help='Disaster categories CSV file')
+    parser.add_argument('database', help='Full path to save Database file')
+
+    return parser.parse_args()
+
 
 def main():
-    if len(sys.argv) == 4:
+    args = arguments_parser()
 
-        messages_filepath, categories_filepath, database_filepath = sys.argv[1:]
+    messages_filepath = args.messages
+    categories_filepath = args.categories
+    database_filepath = args.database
 
-        print('Loading data...\n    MESSAGES: {}\n    CATEGORIES: {}'
-              .format(messages_filepath, categories_filepath))
-        df = load_data(messages_filepath, categories_filepath)
+    print('Loading data...\n    MESSAGES: {}\n    CATEGORIES: {}'
+          .format(messages_filepath, categories_filepath))
 
-        print('Cleaning data...')
-        df = clean_data(df)
+    df = load_data(messages_filepath, categories_filepath)
 
-        print('Saving data...\n    DATABASE: {}'.format(database_filepath))
-        save_data(df, database_filepath)
+    print('Cleaning data...')
+    df = clean_data(df)
 
-        print('Cleaned data saved to database!')
+    print('Saving data...\n    DATABASE: {}'.format(database_filepath))
+    save_data(df, database_filepath)
 
-    else:
-        print('Please provide the filepaths of the messages and categories '\
-              'datasets as the first and second argument respectively, as '\
-              'well as the filepath of the database to save the cleaned data '\
-              'to as the third argument. \n\nExample: python process_data.py '\
-              'disaster_messages.csv disaster_categories.csv '\
-              'DisasterResponse.db')
+    print('Cleaned data saved to database!')
+
 
 
 if __name__ == '__main__':
