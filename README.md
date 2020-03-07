@@ -18,7 +18,7 @@ We have used the following libraries besides the regular Python Data Science sta
 
 ### Project description
 
-The project is divided in three main components:
+The project is divided into three main components:
 
 #### 1. ETL Pipeline
 
@@ -27,11 +27,11 @@ A Python script, `process_data.py`, contains the data cleaning pipeline that:
 - Loads the `messages` and `categories` datasets
 - Merges the two datasets
 - Cleans the data
-- Stores it in a SQLite database
+- Stores it in an SQLite database
 
 #### 2. ML Pipeline
 
-A Python script, `train_classifier.py`, that hold the code of the machine learning pipeline that:
+A Python script, `train_classifier.py`, that holds the code of the machine learning pipeline that:
 
 - Loads data from the SQLite database saved before
 - Splits the dataset into training and test sets
@@ -42,7 +42,7 @@ A Python script, `train_classifier.py`, that hold the code of the machine learn
 
 #### 3. Flask Web App
 
-Holds the code of the Web Interface from which the end user will enter the message's text to get the predictions. This page will guide the emergency worker providing predictions about the type of emergency at hand.
+Holds the code of the Web Interface from which the end-user will enter the message's text to get the predictions. This page will guide the emergency worker providing predictions about the type of emergency at hand.
 
 #### Files description
 
@@ -53,7 +53,7 @@ The list of the files used in this project are:
 |  - template
 |  |- master.html   # main page of web app
 |  |- go.html       # classification result page of web app
-|- run.py           # Flask file that runs app
+|- run.py           # Flask file that runs the app
 
 - data
 |- disaster_categories.csv  # data to process
@@ -101,4 +101,4 @@ The list of the files used in this project are:
 
 ### Acknowledgments
 
-I wan to thank to Stack Overflow and [Scikit Learn](https://scikit-learn.org/stable/index.html) for the terrific information/help and documentation respectively that have make this project possible. Also my class mates in [Udacity](https://www.udacity.com) and my excellent mentor!
+I want to thank Stack Overflow and [Scikit Learn](https://scikit-learn.org/stable/index.html) for the terrific information/help and documentation respectively that have made this project possible. Also my classmates in [Udacity](https://www.udacity.com) and my excellent mentor!
