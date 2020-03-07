@@ -1,4 +1,4 @@
-![alt Disaster Response Project](images/disaster-response-project1.png)
+![alt Disaster Response Project](images/Message_distribution.png)
 
 # Disaster Response Pipeline Project
 
@@ -6,7 +6,7 @@ In this project, we analyzed disaster data provided by [Figure Eight](https://w
 
 The provided data set contains real messages that were sent during disaster events. We have created a machine learning pipeline to categorize these events so that users of the application can send the messages to an appropriate disaster relief agency to take proper and timely action.
 
-The project includes a web application where an emergency worker can input a new message and get classification results in several categories. The web application also displays visualizations of the data.
+The project includes a web application were an emergency worker can input a new message and get classification results in several categories. The web application also displays visualizations of the data.
 
 ### Libraries used
 
@@ -51,39 +51,54 @@ The list of the files used in this project are:
 ```sh
 - app
 |  - template
-|  |- master.html  # main page of web app
-|  |- go.html  # classification result page of web app
-|- run.py  # Flask file that runs app
+|  |- master.html   # main page of web app
+|  |- go.html       # classification result page of web app
+|- run.py           # Flask file that runs app
 
 - data
 |- disaster_categories.csv  # data to process
-|- disaster_messages.csv  # data to process
-|- process_data.py  # process data and saves it into a database
-|- InsertDatabaseName.db   # database to save clean data to
+|- disaster_messages.csv    # data to process
+|- process_data.py          # process data and saves it into a database
+|- DisasterResponse.db      # database to save clean data to
 
 - models
 |- train_classifier.py  # machine learning modeling and prediction
-|- classifier.pkl  # saved model
+|- classifier.pkl       # saved model
+
+- images
+|- English_No-English.png     # English/No-English messages distribution
+|- Message_distribution.png   # Messages distribution histogram
 
 - README.md
 ```
+![alt Disaster Response Project](images/English_No-English.png)
 
 ### Instructions:
 
 1. Run the following commands in the project's root directory to set up your database and model.
 
-    - To run ETL pipeline that cleans data and stores in database
+    - To run ETL pipeline that loads the source CSV files, cleans them and stores the cleaned resulting Pandas Dataframe in a database. Run the following under the `data` directory.
 
-        `python data/process_data.py data/disaster_messages.csv data/disaster_categories.csv data/DisasterResponse.db`
-    - To run ML pipeline that trains classifier and saves
+        ```
+        python process_data.py disaster_messages.csv disaster_categories.csv DisasterResponse.db
+        ```
 
-        `python models/train_classifier.py data/DisasterResponse.db models/classifier.pkl`
+    - To run ML pipeline that trains classifier and saves the model in a pickle file run the following from the `models` directory:
 
-2. Run the following command in the app's directory to run your web app.
-    `python run.py`
+        ```
+        python train_classifier.py ../data/DisasterResponse.db classifier.pkl
+        ```
 
-3. Go to http://0.0.0.0:3001/
+2. Run the following command in the `app` directory to run the web application in order to do predictions:
+
+    ```
+    python run.py
+    ```
+
+3. Then go to http://0.0.0.0:3001/ to launch the web interface of the application
+
+4. In the box on the top enter the message to classify and click on the "Classify Message" button.
 
 ### Acknowledgments
 
-I wan to thank to Stack Overflow and [Scikit](https://scikit-learn.org/stable/index.html) Learn people for the terrific information and documentation respectively that have make this project possible. Also my class mates in [Udacity](https://www.udacity.com) and my excellent mentor!
+I wan to thank to Stack Overflow and [Scikit Learn](https://scikit-learn.org/stable/index.html) for the terrific information/help and documentation respectively that have make this project possible. Also my class mates in [Udacity](https://www.udacity.com) and my excellent mentor!

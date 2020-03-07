@@ -38,7 +38,7 @@ def load_data(messages_filepath, categories_filepath):
     categories = pd.read_csv('disaster_categories.csv')
 
     # merge datasets
-    df = messages.merge(categories, on='id')
+    df = messages.merge(categories, on = 'id')
 
     return df
 
@@ -56,10 +56,10 @@ def clean_data(df):
     """
 
     # create a dataframe of the 36 individual category columns
-    categories = df['categories'].str.split(";", expand=True)
+    categories = df['categories'].str.split(";", expand = True)
 
     # select the first row of the categories dataframe
-    row = categories.iloc[0].reset_index(drop=True)
+    row = categories.iloc[0].reset_index(drop = True)
 
     # use this row to extract a list of new column names for categories.
     category_colnames = [x[:-2] for x in row]
@@ -75,11 +75,11 @@ def clean_data(df):
                              .apply(lambda x : int(x[-1:]))
 
     # drop the original categories column from `df`
-    df.drop(columns='categories', inplace=True)
+    df.drop(columns = 'categories', inplace = True)
 
     # concatenate the original dataframe with the new
     # `categories` dataframe
-    df = pd.concat([df, categories], axis=1)
+    df = pd.concat([df, categories], axis = 1)
 
     # replace related values = 2 to 0 according to documentation
     df['related'] = df['related'].replace(2, 0)
@@ -104,9 +104,16 @@ def save_data(df, database_filename):
     table_name = database_filename.replace('.db', '')
 
     engine = create_engine(database_name)
-    df.to_sql(table_name, engine, index=False, if_exists='replace')
+    df.to_sql(table_name, engine, index = False, if_exists = 'replace')
 
 def arguments_parser():
+    """Parse the arguments for the script.
+
+    Args:
+    None
+    Returns:
+    parse_args() object with parsed arguments dict
+    """
 
     parser = argparse.ArgumentParser(
             description='''Performs ETL pipeline.

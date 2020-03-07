@@ -6,6 +6,7 @@ __author__ = 'Pablo Wolter'
 
 
 import os
+import re
 import json
 import plotly
 import pandas as pd
@@ -15,23 +16,50 @@ from nltk.tokenize import word_tokenize
 
 from flask import Flask
 from flask import render_template, request, jsonify
-from plotly.graph_objs import Bar
+from plotly.graph_objs import Bar, Pie, Histogram
 from sklearn.externals import joblib
 from sqlalchemy import create_engine
 
+from collections import Counter
+from nltk.corpus import stopwords
+from nltk.stem.porter import PorterStemmer
 
 app = Flask(__name__)
 
 def tokenize(text):
-    tokens = word_tokenize(text)
-    lemmatizer = WordNetLemmatizer()
+    """Replaces URLs by placeholders, removes punctuation, lowercase all words,
+    tokenize and lemmetize the tokens.
 
-    clean_tokens = []
-    for tok in tokens:
-        clean_tok = lemmatizer.lemmatize(tok).lower().strip()
-        clean_tokens.append(clean_tok)
+    Args:
+    text:
+        Pandas series with the text to be tokenized/transformed.
+    Returns:
+    lemmed:
+        Text ready to be input into ML algorithms to build a model.
+    """
 
-    return clean_tokens
+    # URL replacement
+    url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+
+    detected_urls = re.findall(url_regex, text)
+    for url in detected_urls:
+        text = text.replace(url, "urlplaceholder")
+
+    # Lowercase and punctuation removal
+    text = re.sub(r"[^a-zA-Z0-9]", " ", text.lower()).split()
+
+    # Stop word removal
+    words = [w for w in text if w not in stopwords.words("english")]
+
+    # Stemming
+    stemmed = [PorterStemmer().stem(w) for w in words]
+
+    # Lemmatization
+    lemmed = [WordNetLemmatizer().lemmatize(w) for w in stemmed]
+
+    return lemmed
+
+
 
 # load data
 database_filepath = '../data/DisasterResponse.db'
@@ -59,6 +87,20 @@ def index():
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
 
+    # english - non-english messages percentage
+    values = []
+    values.append(df['original'].count())
+    values.append(df['original'].isnull().sum())
+    labels = ['English', 'No English']
+
+    # frequency of words histogram
+    df_test = df.drop(columns=['id', 'message', 'original'])
+    genre_keys = df_test.aggregate(sum).iloc[1:].reset_index() \
+        .sort_values(by=0, ascending=False)['index']
+    genre_values = df_test.aggregate(sum).iloc[1:].reset_index() \
+        .sort_values(by=0, ascending=False)[0]
+
+
     # create visuals
     # TODO: Below is an example - modify to create your own visuals
     graphs = [
@@ -79,7 +121,37 @@ def index():
                     'title': "Genre"
                 }
             }
-        }
+        },
+
+        {
+            'data': [
+                Bar(
+                    x=genre_keys,
+                    y=genre_values
+                )
+            ],
+
+            'layout': {
+                'title': 'Distribution of Messages',
+                'yaxis': {
+                    'title': "Count"
+                },
+            }
+        },
+
+        {
+            'data': [
+                Pie(
+                    labels=labels,
+                    values=values
+                )
+            ],
+
+            'layout': {
+                'title': 'Distribution of Message (English - No english)',
+            }
+        },
+
     ]
 
     # encode plotly graphs in JSON

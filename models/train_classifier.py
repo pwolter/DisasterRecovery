@@ -64,13 +64,17 @@ def load_data(database_filepath):
     conn = engine.connect()
     df = pd.read_sql_table(table_name, conn)
 
-    # Sample 25% of dataframe to speed up modeling - change to 100% for full run
-    sample_percentage = 0.1
-    df = df.sample(frac=sample_percentage)
+    # let's sample the data
+    df = df.sample(frac = sample_percentage, random_state = random_state)
+
+    # columns to drop from dataframe
+    # plus 2 columns child_alone and shops that are all 0
+    columns=['id', 'message', 'original', 'genre',
+             'request', 'offer', 'child_alone', 'shops']
 
     # let's build X and y
     X = df['message']
-    y = df.drop(columns=['id', 'message', 'original', 'genre', 'request', 'offer', 'related'])
+    y = df.drop(columns = columns)
     category_names = y.columns.tolist()
 
     return X, y, category_names
@@ -121,54 +125,26 @@ def build_model():
         best model found by GridsearchCV.
     """
 
-    # CountVectorizer
-    # max_df = 0.8
-    # max_features = 5000
-    # min_df = 1
-    # ngram_range = (3, 3)
-
-    # TfidfTransformer
-    # norm = 'l1'
-    # smooth_idf = True
-    # sublinear_tf = False
-    # use_idf = True
-
-    # RandomForestClassifier
-    # criterion = 'entropy'
-    # min_samples_leaf = 2
-    # n_estimators = 100
-
     parameters = {
-        'vect__max_df': (0.75, 0.8, 0.85),
-        'vect__max_features': (5000, 10000, 50000),
-        'vect__ngram_range': ((1, 2), (2, 3)),
-
-        # 'tfidf__use_idf': (True, False),
-        'tfidf__norm': ('l1', 'l2'),
+        'tfidf__use_idf': ('True', 'False'),
 
         'clf__estimator__n_estimators': (50, 100, 150),
-        # 'clf__estimator__criterion': ('gini', 'entropy'),
-        'clf__estimator__learning_rate': (0.2, 0.3, 0.4),
+        'clf__estimator__learning_rate': (0.1, 0.15, 0.2),
     }
 
     pipeline = Pipeline(
         [
-            ('vect', CountVectorizer(tokenizer=tokenize)),
-            # ('vect', CountVectorizer(max_df=max_df, max_features=max_features,
-            # min_df=min_df, ngram_range=ngram_range, tokenizer=tokenize)),
-
-            ('tfidf', TfidfTransformer(use_idf=True)),
-            # ('tfidf', TfidfTransformer(norm=norm, smooth_idf=smooth_idf,
-            # sublinear_tf=sublinear_tf, use_idf=use_idf)),
-
-            # ('clf', MultiOutputClassifier(RandomForestClassifier(
-            # criterion=criterion, min_samples_leaf=min_samples_leaf,
-            # n_estimators=n_estimators)))
-            ('clf', MultiOutputClassifier(AdaBoostClassifier()))
+            ('vect', CountVectorizer(tokenizer = tokenize)),
+            ('tfidf', TfidfTransformer()),
+            ('clf', MultiOutputClassifier(
+                AdaBoostClassifier(random_state = random_state))
+            )
         ]
     )
 
-    best_model = GridSearchCV(estimator=pipeline, param_grid=parameters, n_jobs=-1, cv=5, refit=True, return_train_score=True, verbose=1)
+    best_model = GridSearchCV(estimator = pipeline, param_grid = parameters,
+                              n_jobs = -1, cv = cv, refit = True,
+                              return_train_score = True, verbose = 1)
 
     return best_model
 
@@ -215,6 +191,13 @@ def save_model(model, model_filepath):
 
 
 def arguments_parser():
+    """Parse the arguments for the script.
+
+    Args:
+    None
+    Returns:
+    parse_args() object with parsed arguments dict
+    """
 
     parser = argparse.ArgumentParser(
         description='''Please provide the filepath of the disaster messages
@@ -242,14 +225,20 @@ def main():
     print('Loading data...\n    DATABASE: {}'.format(database_filepath))
 
     X, Y, category_names = load_data(database_filepath)
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.2)
 
+    # have to add parallel_backend because I was having an error
+    # with pickle
     with parallel_backend('multiprocessing'):
         print('Building model...')
         model = build_model()
 
         print('Training model...')
         model.fit(X_train, Y_train)
+
+        print('Model Parameters...')
+        print(model.best_estimator_)
+        #model = model.best_estimator_
 
         print('Evaluating model...')
         evaluate_model(model, X_test, Y_test, category_names)
@@ -261,4 +250,14 @@ def main():
 
 
 if __name__ == '__main__':
+    # Sample percentage of dataframe to speed up modeling
+    # changed to 100% for full run
+    sample_percentage = 1
+
+    # setup cross validation parameter globaly
+    cv = 10
+
+    # setup random_state globaly as well
+    random_state = 42
+
     main()
