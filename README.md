@@ -15,6 +15,16 @@ We have used the following libraries besides the regular Python Data Science sta
 - Scikit learn
 - NLTK
 - sqlalchemy
+- Flask
+- pickle 0.20
+- Plotly
+- argparser
+
+To install them just run:
+
+```
+pip install -u scikit-learn nltk sqlalchemy flask pickleshare plotly
+```
 
 ### Project description
 
