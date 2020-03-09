@@ -103,13 +103,11 @@ def tokenize(text):
     text = re.sub(r"[^a-zA-Z0-9]", " ", text.lower()).split()
 
     # Stop word removal
-    words = [w for w in text if w not in stopwords.words("english")]
-
-    # Stemming
-    stemmed = [PorterStemmer().stem(w) for w in words]
+    stop_words = set(stopwords.words("english"))
+    words = [w for w in text if w not in stop_words]
 
     # Lemmatization
-    lemmed = [WordNetLemmatizer().lemmatize(w) for w in stemmed]
+    lemmed = [WordNetLemmatizer().lemmatize(w) for w in words]
 
     return lemmed
 
@@ -126,10 +124,13 @@ def build_model():
     """
 
     parameters = {
+        'vect__ngram_range': ((1, 2), (2, 3)),
+
         'tfidf__use_idf': ('True', 'False'),
 
-        'clf__estimator__n_estimators': (50, 100, 150),
-        'clf__estimator__learning_rate': (0.1, 0.15, 0.2),
+        'clf__estimator__n_estimators': (10, 30, 50),
+        'clf__estimator__warm_start': ('True',),
+        'clf__estimator__min_samples_split': (0.6, 0.7, 0.8),
     }
 
     pipeline = Pipeline(
@@ -137,7 +138,7 @@ def build_model():
             ('vect', CountVectorizer(tokenizer = tokenize)),
             ('tfidf', TfidfTransformer()),
             ('clf', MultiOutputClassifier(
-                AdaBoostClassifier(random_state = random_state))
+                RandomForestClassifier(random_state = random_state))
             )
         ]
     )
@@ -237,7 +238,7 @@ def main():
         model.fit(X_train, Y_train)
 
         print('Model Parameters...')
-        print(model.best_estimator_)
+        print(model.best_params_)
         #model = model.best_estimator_
 
         print('Evaluating model...')
