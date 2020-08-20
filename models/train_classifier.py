@@ -41,7 +41,7 @@ from sklearn.utils import parallel_backend
 
 def load_data(database_filepath):
     """Reads 'disaster_messages.csv' and 'disaster_categories.csv' into
-    pnadas dataframes. Merges them into a single dataframe and returns it.
+    pandas dataframes. Merges them into a single dataframe and returns it.
 
     Args:
     messages_filepath:
